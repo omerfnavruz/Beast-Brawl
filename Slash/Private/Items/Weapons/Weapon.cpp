@@ -30,7 +30,7 @@ void AWeapon::BeginPlay()
 	WeaponBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
-void AWeapon::Equip(USceneComponent* SceneComponent, FName Name)
+void AWeapon::Equip(USceneComponent* SceneComponent, FName Name, AActor* NewOwner, APawn* NewInvestigator)
 {
 
 	if (SceneComponent)
@@ -42,6 +42,10 @@ void AWeapon::Equip(USceneComponent* SceneComponent, FName Name)
 			UGameplayStatics::PlaySoundAtLocation(this, ShrinkSound, GetActorLocation());
 		}
 		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		SetOwner(NewOwner);
+		SetInstigator(NewInvestigator);
+
 	}
 }
 
@@ -97,6 +101,14 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		}
 		IgnoreArray.AddUnique(HitResult.GetActor());
 		CreateFields(HitResult.ImpactPoint);
+
+		UGameplayStatics::ApplyDamage(
+			HitResult.GetActor(),
+			Damage,
+			GetInstigator()->GetController(),
+			this,
+			UDamageType::StaticClass()
+		);
 	}
 
 }

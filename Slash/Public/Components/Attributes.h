@@ -15,10 +15,13 @@ class SLASH_API UAttributes : public UActorComponent
 public:	
 	UAttributes();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	void ReceiveDamage(float Damage);
+	float GetHealthPercent();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")

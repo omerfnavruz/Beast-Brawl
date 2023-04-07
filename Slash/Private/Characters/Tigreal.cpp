@@ -112,7 +112,7 @@ void ATigreal::FPressed(const FInputActionValue& Value)
 	}
 	if (OverlappingWeapon)
 	{
-		OverlappingWeapon->Equip(GetMesh(), FName("hand_rSocket"));
+		OverlappingWeapon->Equip(GetMesh(), FName("hand_rSocket"), this, this);
 		TigrealState = ETigrealState::ECS_OneHandEquipped;
 		EquippedWeapon = OverlappingWeapon;
 		OverlappingItem = nullptr;
