@@ -18,10 +18,17 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
 	void DirectionalHitReact(const FVector& ImpactPoint);
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
 	virtual void BeginPlay() override;
 	void PlayHitReactMontage(FName SectionName);
+
+	UPROPERTY(VisibleAnywhere, Category = Attributes);
+	TObjectPtr<class UAttributes> Attributes;
+	UPROPERTY(VisibleAnywhere, Category = Attributes);
+	TObjectPtr<class UHealthBarComponent> HealthBarWidget;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Montages);
@@ -32,8 +39,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = VisualEffects);
 	TObjectPtr<UParticleSystem> HitParticles;
-public:	
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
 
 };
