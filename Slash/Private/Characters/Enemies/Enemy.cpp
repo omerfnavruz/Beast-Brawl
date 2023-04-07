@@ -42,6 +42,28 @@ void AEnemy::PlayHitReactMontage(FName SectionName)
 	}
 }
 
+void AEnemy::PlayDeathReactMontage(FName SectionName)
+{
+	auto const  AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathReactMontage)
+	{
+		AnimInstance->Montage_Play(DeathReactMontage);
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AEnemy::PlayReactMontage(FName SectionName)
+{
+	if (Attributes && Attributes->IsAlive())
+	{
+		PlayHitReactMontage(SectionName);
+	}
+	else
+	{
+		PlayDeathReactMontage(SectionName);
+	}
+}
+
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
 	//DbgDrawer::SphereAtLoc(GetWorld(), ImpactPoint);
@@ -56,7 +78,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 		);
 	}
 
-	if (HitParticles)
+	if (HitParticles && GetWorld())
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, ImpactPoint);
 	}
@@ -76,22 +98,22 @@ void AEnemy::DirectionalHitReact(const FVector& ImpactPoint)
 
 	if (Teta >= -45.f && Teta < 45.f)
 	{
-		PlayHitReactMontage(FName("FromFront"));
+		PlayReactMontage(FName("FromFront"));
 	}
 
 	else if (Teta >= 45.f && Teta < 135.f)
 	{
-		PlayHitReactMontage(FName("FromRight"));
+		PlayReactMontage(FName("FromLeft"));
 	}
 
 	else if (Teta >= -135.f && Teta < -45.f)
 	{
-		PlayHitReactMontage(FName("FromLeft"));
+		PlayReactMontage(FName("FromRight"));
 	}
 
 	else
 	{
-		PlayHitReactMontage(FName("FromBack"));
+		PlayReactMontage(FName("FromBack"));
 	}
 }
 

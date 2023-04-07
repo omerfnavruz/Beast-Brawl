@@ -17,6 +17,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ReceiveDamage(float Damage);
 	float GetHealthPercent();
+	bool IsAlive() { return Health > 0; }
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

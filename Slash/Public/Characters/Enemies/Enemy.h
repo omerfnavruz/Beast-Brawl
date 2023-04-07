@@ -24,6 +24,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	void PlayHitReactMontage(FName SectionName);
+	void PlayDeathReactMontage(FName SectionName);
+	void PlayReactMontage(FName SectionName);
 
 	UPROPERTY(VisibleAnywhere, Category = Attributes);
 	TObjectPtr<class UAttributes> Attributes;
@@ -33,6 +35,9 @@ protected:
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Montages);
 	TObjectPtr<UAnimMontage> HitReactMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages);
+	TObjectPtr<UAnimMontage> DeathReactMontage;
 
 	UPROPERTY(EditAnywhere, Category = Sounds);
 	TObjectPtr<USoundBase> HitSound;

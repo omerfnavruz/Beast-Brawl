@@ -48,4 +48,5 @@ private:
 	UPROPERTY(VisibleAnywhere);
 	float Damage = 20.f;
 
+
 };
