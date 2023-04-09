@@ -39,6 +39,7 @@ ATigreal::ATigreal()
 void ATigreal::BeginPlay()
 {
 	Super::BeginPlay();
+	Tags.Add(FName("Tigreal"));
 	GetMesh()->HideBoneByName(TEXT("sword_bottom"), EPhysBodyOp::PBO_None);
 	GetMesh()->HideBoneByName(TEXT("shield_inner"), EPhysBodyOp::PBO_None);
 	if (auto PlayerController = Cast<APlayerController>(GetController()))

@@ -40,7 +40,7 @@ protected:
 		return ActionState == EActionState::EAS_UnOccupied && (TigrealState == ETigrealState::ECS_OneHandEquipped || TigrealState == ETigrealState::ECS_TwoHandEquipped);
 	}
 
-	FORCEINLINE bool CanMove() { return ActionState == EActionState::EAS_UnOccupied && LandState == ELandState::ELC_Unlocked; }
+	bool CanMove() { return ActionState == EActionState::EAS_UnOccupied && LandState == ELandState::ELC_Unlocked; }
 	bool CanDisarm() { return TigrealState != ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied; }
 	bool CanArm() { return TigrealState == ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied && EquippedWeapon; }
 
@@ -54,16 +54,16 @@ protected:
 	void ArmWeapon();
 
 	UFUNCTION(BlueprintCallable)
-	void EndAttack() { ActionState = EActionState::EAS_UnOccupied;	}
+	void EndAttack() { if(ActionState != EActionState::EAS_UnOccupied) ActionState = EActionState::EAS_UnOccupied;	}
 
 	UFUNCTION(BlueprintCallable)
-	void LandLockMove() { LandState = ELandState::ELS_Locked; }
+	void LandLockMove() { if(LandState != ELandState::ELS_Locked) LandState = ELandState::ELS_Locked; }
 
 	UFUNCTION(BlueprintCallable)
-	void LandUnlockMove() { LandState = ELandState::ELC_Unlocked; }
+	void LandUnlockMove() { if(LandState != ELandState::ELC_Unlocked) LandState = ELandState::ELC_Unlocked; }
 
 	UFUNCTION(BlueprintCallable)
-	void UnlockEquipMove() { ActionState = EActionState::EAS_UnOccupied; }
+	void UnlockEquipMove() { if(ActionState != EActionState::EAS_UnOccupied) ActionState = EActionState::EAS_UnOccupied; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input);
 	TObjectPtr<UInputMappingContext> TigrealMappingContext;
