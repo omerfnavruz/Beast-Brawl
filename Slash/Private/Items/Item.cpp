@@ -20,6 +20,8 @@ AItem::AItem()
 	RootComponent = ItemMesh;
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	Sphere->SetupAttachment(GetRootComponent());
+	ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned

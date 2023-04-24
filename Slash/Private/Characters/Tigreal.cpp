@@ -13,6 +13,9 @@
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/Attributes.h"
 
 // Sets default values
 ATigreal::ATigreal()
@@ -26,13 +29,20 @@ ATigreal::ATigreal()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
-
+	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Block);
+	GetMesh()->SetGenerateOverlapEvents(true);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Block);
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
 	CameraBoom->TargetArmLength = 300.f;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(CameraBoom);
+	DeathPose = EDeathPose::EDP_Alive;
 }
 
 // Called when the game starts or when spawned
@@ -49,6 +59,19 @@ void ATigreal::BeginPlay()
 			Subsystem->AddMappingContext(TigrealMappingContext, 0);
 		}
 	}
+}
+
+void ATigreal::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
+	UE_LOG(LogTemp, Warning, TEXT("Tigreal Got Hit!!"));
+	ActionState = EActionState::EAS_HitReaction;
+}
+
+float ATigreal::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Attributes->ReceiveDamage(DamageAmount);
+	return DamageAmount;
 }
 
 void ATigreal::Jump()
@@ -139,36 +162,18 @@ void ATigreal::Attack()
 {
 	if (CanAttack())
 	{
-		PlayAttackMontage();
+		PlayAttackMontage(2);
 		ActionState = EActionState::EAS_Attacking;
+		LandState = ELandState::ELC_Unlocked;
 	}
-	
-
 }
 
-void ATigreal::PlayAttackMontage()
+void ATigreal::Die(EDeathPose PossibleDeathPose, const FName& SectionName)
 {
-	auto const  AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage)
-	{
-		AnimInstance->Montage_Play(AttackMontage);
-		auto AnimSelection = FMath::RandRange(0, 1);
-		FName SectionName;
-		switch (AnimSelection)
-		{
-		case 0:
-			SectionName = FName("Attack1");
-			break;
-		case 1:
-			SectionName = FName("Attack2");
-			break;
-		default:
-			break;
-		}
-		AnimInstance->Montage_JumpToSection(SectionName);
-
-	}
+	DeathPose = PossibleDeathPose;
+	PlayDeathReactMontage(SectionName);
 }
+
 
 void ATigreal::PlayArmMontage(FName SectionName)
 {
@@ -201,18 +206,12 @@ void ATigreal::ArmWeapon()
 	}
 }
 
-void ATigreal::SetBoxTrace(ECollisionEnabled::Type CollisionEnabled)
+void ATigreal::HitReactEnd()
 {
-	if (EquippedWeapon)
-	{
-		if (const auto Box = EquippedWeapon->GetWeaponBox())
-		{
-			Box->SetCollisionEnabled(CollisionEnabled);
-			EquippedWeapon->IgnoreActors.Empty();
-		}
-	}
-	
+	ActionState = EActionState::EAS_UnOccupied;
 }
+
+
 
 // Called every frame
 void ATigreal::Tick(float DeltaTime)

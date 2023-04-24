@@ -19,22 +19,40 @@ class SLASH_API AWeapon : public AItem
 public:
 	AWeapon();
 	void Equip(USceneComponent* SceneComponent, FName Name, AActor* NewOwner, APawn* NewInvestigator);
-	void AttachMeshToSocket(USceneComponent* SceneComponent, const FName& Name);
+
 	FORCEINLINE TObjectPtr<UBoxComponent> GetWeaponBox() const { return WeaponBoxComponent; }
+	void AttachMeshToSocket(USceneComponent* SceneComponent, const FName& Name);
 
 	TArray<AActor*> IgnoreActors;
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	virtual void EndSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-	UFUNCTION()
-	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void BoxTrace(FHitResult& HitResult);
+	void DisableSphereCollision();
+	void PlayShinkSound();
+
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void CreateFields(const FVector& FieldLocation);
+		void CreateFields(const FVector& FieldLocation);
+
+	UFUNCTION()
+		virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	bool IsBothEnemy(AActor* OtherActor);
+
+	void ApplyDamage(AActor* const& HitActor);
+
+	void HitTargetActor(FHitResult& HitResult);
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	TObjectPtr<USoundBase> ShrinkSound;
+
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	FVector BoxTraceExtent = FVector(5.f, 5.f, 5.f);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	bool ShowDebug = false;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UBoxComponent> WeaponBoxComponent;

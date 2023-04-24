@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "CharacterTypes.h"
+#include "BaseCharacter.h"
 #include "Tigreal.generated.h"
 
 class AItem;
@@ -14,38 +13,38 @@ struct FInputActionValue;
 class USpringArmComponent;
 class UCameraComponent;
 class UAnimMontage;
-class AWeapon;
+
 
 UCLASS()
-class SLASH_API ATigreal : public ACharacter
+class SLASH_API ATigreal : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
 	ATigreal();
 	virtual void Tick(float DeltaTime) override;
-
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Jump() override;
-	void Move(const FInputActionValue& Value);
+	void Move(const FInputActionValue& Value); 
 	void Look(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
 	void FPressed(const FInputActionValue& Value);
-	void Attack();
-	void PlayAttackMontage();
+	virtual void Attack() override ;
+	virtual void Die(EDeathPose PossibleDeathPose, const FName& SectionName) override;
 	void PlayArmMontage(FName SectionName);
-	FORCEINLINE bool CanAttack() {
-		return ActionState == EActionState::EAS_UnOccupied && (TigrealState == ETigrealState::ECS_OneHandEquipped || TigrealState == ETigrealState::ECS_TwoHandEquipped);
+	virtual bool CanAttack() override{
+		return (CanMove() && TigrealState != ETigrealState::ECS_Unequipped);
 	}
 
 	bool CanMove() { return ActionState == EActionState::EAS_UnOccupied && LandState == ELandState::ELC_Unlocked; }
 	bool CanDisarm() { return TigrealState != ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied; }
 	bool CanArm() { return TigrealState == ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied && EquippedWeapon; }
 
-	UFUNCTION(BlueprintCallable)
-	void SetBoxTrace(ECollisionEnabled::Type CollisionEnabled);
+
 
 	UFUNCTION(BlueprintCallable)
 	void DisarmWeapon();
@@ -53,8 +52,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ArmWeapon();
 
-	UFUNCTION(BlueprintCallable)
-	void EndAttack() { if(ActionState != EActionState::EAS_UnOccupied) ActionState = EActionState::EAS_UnOccupied;	}
+	virtual void EndAttack() override { if (ActionState != EActionState::EAS_UnOccupied) ActionState = EActionState::EAS_UnOccupied;	LandState = ELandState::ELC_Unlocked; }
 
 	UFUNCTION(BlueprintCallable)
 	void LandLockMove() { if(LandState != ELandState::ELS_Locked) LandState = ELandState::ELS_Locked; }
@@ -64,6 +62,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void UnlockEquipMove() { if(ActionState != EActionState::EAS_UnOccupied) ActionState = EActionState::EAS_UnOccupied; }
+
+	UFUNCTION(BlueprintCallable)
+	void HitReactEnd();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input);
 	TObjectPtr<UInputMappingContext> TigrealMappingContext;
@@ -100,11 +101,9 @@ private:
 	EActionState ActionState = EActionState::EAS_UnOccupied;
 	ELandState LandState = ELandState::ELC_Unlocked;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon);
-	TObjectPtr<AWeapon> EquippedWeapon;
 
-	UPROPERTY(EditDefaultsOnly, Category = Montages);
-	TObjectPtr<UAnimMontage> AttackMontage;
+
+
 
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages);
@@ -113,5 +112,6 @@ private:
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 	FORCEINLINE ETigrealState GetTigrealState(void) const { return TigrealState;  }
+	FORCEINLINE EDeathPose GetTigrealDeathPose(void) const { return DeathPose; }
 
 };

@@ -24,5 +24,6 @@ void UTigrealAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		GroundSpeed = UKismetMathLibrary::VSizeXY(TigrealMovement->Velocity);
 		IsFalling = TigrealMovement->IsFalling();
 		TigrealState = Tigreal->GetTigrealState();
+		DeathPose = Tigreal->GetTigrealDeathPose();
 	}
 }

@@ -37,4 +37,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement | CharacterState");
 	ETigrealState TigrealState;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Movement | CharacterState | Poses");
+	EDeathPose DeathPose;
+
 };

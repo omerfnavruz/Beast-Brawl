@@ -32,43 +32,80 @@ void AWeapon::BeginPlay()
 
 void AWeapon::Equip(USceneComponent* SceneComponent, FName Name, AActor* NewOwner, APawn* NewInvestigator)
 {
+	AttachMeshToSocket(SceneComponent, Name);
+	ItemState = EItemState::EIS_Equipped;
+	PlayShinkSound();
+	DisableSphereCollision();
+	SetOwner(NewOwner);
+	SetInstigator(NewInvestigator);
 
-	if (SceneComponent)
-	{
-		AttachMeshToSocket(SceneComponent, Name);
-		ItemState = EItemState::EIS_Equipped;
-		if (ShrinkSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, ShrinkSound, GetActorLocation());
-		}
+	
+}
+
+void AWeapon::DisableSphereCollision()
+{
+	if (Sphere)
 		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
 
-		SetOwner(NewOwner);
-		SetInstigator(NewInvestigator);
-
+void AWeapon::PlayShinkSound()
+{
+	if (ShrinkSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ShrinkSound, GetActorLocation());
 	}
 }
 
 void AWeapon::AttachMeshToSocket(USceneComponent* SceneComponent, const FName& Name)
 {
-	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
-	ItemMesh->AttachToComponent(SceneComponent, Rules, Name);
-}
+	if (SceneComponent){
+		FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+		ItemMesh->AttachToComponent(SceneComponent, Rules, Name);
+	}
 
-
-void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
-
-
-}
-
-void AWeapon::EndSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	Super::EndSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (IsBothEnemy(OtherActor)) return;
+	FHitResult HitResult;
+	BoxTrace(HitResult);
+	
+	if (const auto HitActor = HitResult.GetActor())
+	{
+		if (IsBothEnemy(HitActor)) return;
+		ApplyDamage(HitActor);
+		HitTargetActor(HitResult);
+	}
+
+}
+
+bool AWeapon::IsBothEnemy(AActor* OtherActor)
+{
+	return GetOwner()->ActorHasTag(FName("Enemy")) && OtherActor->ActorHasTag(FName("Enemy"));
+}
+
+void AWeapon::ApplyDamage(AActor* const& HitActor)
+{
+	UGameplayStatics::ApplyDamage(
+		HitActor,
+		Damage,
+		GetInstigator()->GetController(),
+		this,
+		UDamageType::StaticClass()
+	);
+}
+
+void AWeapon::HitTargetActor(FHitResult& HitResult)
+{
+	if (const auto HitInterface = Cast<IHitInterface>(HitResult.GetActor()))
+	{
+		HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+	}
+	CreateFields(HitResult.ImpactPoint);
+}
+
+void AWeapon::BoxTrace(FHitResult& HitResult)
 {
 	TArray<AActor*> IgnoreArray;
 	IgnoreArray.Add(this);
@@ -77,42 +114,22 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	{
 		IgnoreArray.AddUnique(Actor);
 	}
-	FHitResult HitResult;
+
 	UKismetSystemLibrary::BoxTraceSingle(
 		this,
 		TraceStart->GetComponentLocation(),
 		TraceEnd->GetComponentLocation(),
-		FVector(5.f, 5.f, 5.f),
+		BoxTraceExtent,
 		TraceStart->GetComponentRotation(),
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		IgnoreArray,
-		EDrawDebugTrace::None,
+		ShowDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
-	
-	if (const auto HitActor = HitResult.GetActor())
-	{
-		UGameplayStatics::ApplyDamage(
-			HitResult.GetActor(),
-			Damage,
-			GetInstigator()->GetController(),
-			this,
-			UDamageType::StaticClass()
-		);
-
-		const auto HitInterface = Cast<IHitInterface>(HitActor);
-		if (HitInterface)
-		{
-			HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint);
-		}
-		IgnoreActors.AddUnique(HitActor);
-		CreateFields(HitResult.ImpactPoint);
-
-
-	}
-
+	const auto HitActor = HitResult.GetActor();
+	IgnoreActors.AddUnique(HitActor);
 }
 
 
