@@ -14,7 +14,8 @@ class SLASH_API AEnemy : public ABaseCharacter
 
 public:
 	AEnemy();
-
+	static void ResetCounters();
+	static int32_t GetDeadCount();
 protected:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	void ShowHealthBar();
@@ -42,6 +43,7 @@ protected:
 	void LoseInterest();
 	void Patrol();
 	virtual void Die (EDeathPose PossibleDeathPose, const FName& SectionName) override;
+	void SpawnNewEnemy();
 	bool IsInRange(AActor* Target, double Radius);
 	void PatrolTimerFinished();
 	
@@ -89,7 +91,8 @@ protected:
 	EEnemyState CurrentState = EEnemyState::EES_Patrolling;
 
 private:
-
+	UPROPERTY(EditAnywhere);
+	TArray<TSubclassOf<AEnemy>> EnemyToBeSpawned;
 
 	UPROPERTY(VisibleAnywhere);
 	TObjectPtr<class UPawnSensingComponent> PawnSensing;
@@ -97,4 +100,11 @@ private:
 	UPROPERTY(EditAnywhere);
 	TSubclassOf<class AWeapon> WeaponClass;
 
+	FVector InitialPosition;
+	FRotator InitialRotation;
+
+	static int deadCount;
+	static int aliveCount;
+
+	
 };

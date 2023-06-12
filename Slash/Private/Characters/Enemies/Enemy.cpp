@@ -12,6 +12,8 @@
 #include "Perception/PawnSensingComponent.h"
 #include "Items/Weapons/Weapon.h"
 
+int AEnemy::deadCount = 0;
+int AEnemy::aliveCount = 0;
 
 // Sets default values
 AEnemy::AEnemy()
@@ -38,9 +40,22 @@ AEnemy::AEnemy()
 	bUseControllerRotationRoll = false;
 }
 
+void AEnemy::ResetCounters()
+{
+	deadCount = 0;
+	aliveCount = 0;
+}
+
+int32_t AEnemy::GetDeadCount()
+{
+	return deadCount;
+}
+
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+	InitialPosition = GetActorLocation();
+	InitialRotation = GetActorRotation();
 	Tags.Add(FName("Enemy"));
 	HealthBarWidget->SetVisibility(false);
 	EnemyController = Cast<AAIController>(GetController());
@@ -51,6 +66,8 @@ void AEnemy::BeginPlay()
 	}
 
 	EquipWeapon();
+	aliveCount++;
+	aliveCount = aliveCount > 0 ? aliveCount : 1;
 }
 
 void AEnemy::EquipWeapon()
@@ -95,7 +112,7 @@ void AEnemy::Attack()
 	Super::Attack();
 	CurrentState = EEnemyState::EES_Engaged;
 	PlayAttackMontage(4);
-	UE_LOG(LogTemp, Warning, TEXT("Attack"));
+	//UE_LOG(LogTemp, Warning, TEXT("Attack"));
 }
 
 void AEnemy::EndAttack()
@@ -207,6 +224,9 @@ void AEnemy::Patrol()
 }
 void AEnemy::Die(EDeathPose PossibleDeathPose, const FName& SectionName)
 {
+	UE_LOG(LogTemp, Warning, TEXT("State:%d"), (int)CurrentState);
+	if (IsDead())
+		return;
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	CurrentState = EEnemyState::EES_Dead;
@@ -215,8 +235,23 @@ void AEnemy::Die(EDeathPose PossibleDeathPose, const FName& SectionName)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HealthBarWidget->SetVisibility(false);
 	SetLifeSpan(10.f);
+	aliveCount--;
+	aliveCount = aliveCount < 0 ? 0 : aliveCount;
+	deadCount++;
+	SpawnNewEnemy();
 }
 
+void AEnemy::SpawnNewEnemy()
+{
+	int spawnNum = deadCount / 3 + 1;
+	auto World = GetWorld();
+	UE_LOG(LogTemp, Warning, TEXT("SpawnNum: %d DeadCound:%d AliveCount: %d World:%d"), spawnNum, deadCount, aliveCount, (bool)World);
+	if (aliveCount == 0 && World)
+	{
+		for(int i=0; i<spawnNum; i++)
+			World->SpawnActor<AEnemy>(EnemyToBeSpawned[0], InitialPosition, InitialRotation);
+	}
+}
 bool AEnemy::IsInRange(AActor* Target, double Radius)
 {
 	if (!Target)
@@ -285,6 +320,8 @@ void AEnemy::ShowHealthBar()
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	if (IsDead())
+		return 0;
 	UpdateHealth(DamageAmount);
 	CombatTarget = EventInstigator->GetPawn();
 	GetWorldTimerManager().ClearTimer(AttackTimer);

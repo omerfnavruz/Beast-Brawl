@@ -6,6 +6,7 @@
 #include "BaseCharacter.h"
 #include "Tigreal.generated.h"
 
+
 class AItem;
 class UInputMappingContext;
 class UInputAction;
@@ -13,7 +14,7 @@ struct FInputActionValue;
 class USpringArmComponent;
 class UCameraComponent;
 class UAnimMontage;
-
+class USlashOverlay;
 
 UCLASS()
 class SLASH_API ATigreal : public ABaseCharacter
@@ -25,6 +26,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 protected:
 	virtual void BeginPlay() override;
@@ -36,10 +38,11 @@ protected:
 	virtual void Attack() override ;
 	virtual void Die(EDeathPose PossibleDeathPose, const FName& SectionName) override;
 	void PlayArmMontage(FName SectionName);
+	void UpdateHealth(float DamageAmount);
 	virtual bool CanAttack() override{
 		return (CanMove() && TigrealState != ETigrealState::ECS_Unequipped);
 	}
-
+	void InitializeSlashOverlay();
 	bool CanMove() { return ActionState == EActionState::EAS_UnOccupied && LandState == ELandState::ELC_Unlocked; }
 	bool CanDisarm() { return TigrealState != ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied; }
 	bool CanArm() { return TigrealState == ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied && EquippedWeapon; }
@@ -101,13 +104,11 @@ private:
 	EActionState ActionState = EActionState::EAS_UnOccupied;
 	ELandState LandState = ELandState::ELC_Unlocked;
 
-
-
-
-
-
 	UPROPERTY(EditDefaultsOnly, Category = Montages);
 	TObjectPtr<UAnimMontage> ArmMontage;
+
+	UPROPERTY()
+		USlashOverlay* SlashOverlay;
 
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }

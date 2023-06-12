@@ -16,6 +16,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/Attributes.h"
+#include "HUD/HeathBar.h"
+#include "Components/ProgressBar.h"
+#include "HUD/SlashHUD.h"
+#include "HUD/SlashOverlay.h"
+#include "Characters/Enemies/Enemy.h"
 
 // Sets default values
 ATigreal::ATigreal()
@@ -39,16 +44,17 @@ ATigreal::ATigreal()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
 	CameraBoom->TargetArmLength = 300.f;
-
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(CameraBoom);
 	DeathPose = EDeathPose::EDP_Alive;
+	
 }
 
 // Called when the game starts or when spawned
 void ATigreal::BeginPlay()
 {
 	Super::BeginPlay();
+	InitializeSlashOverlay();
 	Tags.Add(FName("Tigreal"));
 	GetMesh()->HideBoneByName(TEXT("sword_bottom"), EPhysBodyOp::PBO_None);
 	GetMesh()->HideBoneByName(TEXT("shield_inner"), EPhysBodyOp::PBO_None);
@@ -57,6 +63,25 @@ void ATigreal::BeginPlay()
 		if (auto Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(TigrealMappingContext, 0);
+		}
+	}
+	AEnemy::ResetCounters();
+}
+
+void ATigreal::InitializeSlashOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		ASlashHUD* SlashHUD = Cast<ASlashHUD>(PlayerController->GetHUD());
+		if (SlashHUD)
+		{
+			SlashOverlay = SlashHUD->GetSlashOverlay();
+			if (SlashOverlay && Attributes)
+			{
+				SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+				SlashOverlay->SetGold(0);
+			}
 		}
 	}
 }
@@ -70,13 +95,22 @@ void ATigreal::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 
 float ATigreal::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	Attributes->ReceiveDamage(DamageAmount);
+	UpdateHealth(DamageAmount);
 	return DamageAmount;
+}
+
+void ATigreal::UpdateHealth(float DamageAmount)
+{
+	if (Attributes && SlashOverlay)
+	{
+		Attributes->ReceiveDamage(DamageAmount);
+		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }
 
 void ATigreal::Jump()
 {
-	if (LandState == ELandState::ELC_Unlocked)
+	if (LandState == ELandState::ELC_Unlocked && IsAlive())
 	{
 		Super::Jump();
 	}
@@ -217,7 +251,8 @@ void ATigreal::HitReactEnd()
 void ATigreal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if(SlashOverlay)
+	SlashOverlay->SetGold(AEnemy::GetDeadCount());
 }
 
 // Called to bind functionality to input
@@ -237,4 +272,5 @@ void ATigreal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 
 }
+
 

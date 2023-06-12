@@ -22,6 +22,7 @@ void ABaseCharacter::BeginPlay()
 
 void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 {
+
 	const auto Teta = CalculateHitAngle(ImpactPoint);
 
 	if (Teta >= -60.f && Teta < 60.f)
