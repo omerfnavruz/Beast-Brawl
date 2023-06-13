@@ -214,7 +214,7 @@ void AEnemy::LoseInterest()
 	HealthBarWidget->SetVisibility(false);
 	CombatTarget = nullptr;
 	Patrol();
-	UE_LOG(LogTemp, Warning, TEXT("Lose Interest"));
+	//UE_LOG(LogTemp, Warning, TEXT("Lose Interest"));
 }
 void AEnemy::Patrol()
 {
@@ -224,7 +224,7 @@ void AEnemy::Patrol()
 }
 void AEnemy::Die(EDeathPose PossibleDeathPose, const FName& SectionName)
 {
-	UE_LOG(LogTemp, Warning, TEXT("State:%d"), (int)CurrentState);
+	//UE_LOG(LogTemp, Warning, TEXT("State:%d"), (int)CurrentState);
 	if (IsDead())
 		return;
 	ClearAttackTimer();
@@ -245,7 +245,7 @@ void AEnemy::SpawnNewEnemy()
 {
 	int spawnNum = deadCount / 3 + 1;
 	auto World = GetWorld();
-	UE_LOG(LogTemp, Warning, TEXT("SpawnNum: %d DeadCound:%d AliveCount: %d World:%d"), spawnNum, deadCount, aliveCount, (bool)World);
+	//UE_LOG(LogTemp, Warning, TEXT("SpawnNum: %d DeadCound:%d AliveCount: %d World:%d"), spawnNum, deadCount, aliveCount, (bool)World);
 	if (aliveCount == 0 && World)
 	{
 		for(int i=0; i<spawnNum; i++)
@@ -292,7 +292,7 @@ void AEnemy::Chase()
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 	CurrentState = EEnemyState::EES_Chasing;
 	GoToActor(CombatTarget);
-	UE_LOG(LogTemp, Warning, TEXT("Chase Player"));
+	//UE_LOG(LogTemp, Warning, TEXT("Chase Player"));
 	
 }
 

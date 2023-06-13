@@ -37,15 +37,16 @@ protected:
 	void FPressed(const FInputActionValue& Value);
 	virtual void Attack() override ;
 	virtual void Die(EDeathPose PossibleDeathPose, const FName& SectionName) override;
+	void OpenLevelDelayed();
 	void PlayArmMontage(FName SectionName);
 	void UpdateHealth(float DamageAmount);
 	virtual bool CanAttack() override{
 		return (CanMove() && TigrealState != ETigrealState::ECS_Unequipped);
 	}
 	void InitializeSlashOverlay();
-	bool CanMove() { return ActionState == EActionState::EAS_UnOccupied && LandState == ELandState::ELC_Unlocked; }
-	bool CanDisarm() { return TigrealState != ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied; }
-	bool CanArm() { return TigrealState == ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied && EquippedWeapon; }
+	bool CanMove() { return ActionState == EActionState::EAS_UnOccupied && LandState == ELandState::ELC_Unlocked && IsAlive(); }
+	bool CanDisarm() { return TigrealState != ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied && IsAlive(); }
+	bool CanArm() { return TigrealState == ETigrealState::ECS_Unequipped && ActionState == EActionState::EAS_UnOccupied && EquippedWeapon && IsAlive(); }
 
 
 
@@ -90,7 +91,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input);
 	TObjectPtr<UInputAction> AttackAction;
 
+	FTimerHandle LevelOpenTimerHandle;
+
 private:
+	
+
 	UPROPERTY(VisibleAnywhere);
 	TObjectPtr<USpringArmComponent> CameraBoom;
 

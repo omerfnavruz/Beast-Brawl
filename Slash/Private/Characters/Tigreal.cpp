@@ -21,6 +21,7 @@
 #include "HUD/SlashHUD.h"
 #include "HUD/SlashOverlay.h"
 #include "Characters/Enemies/Enemy.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATigreal::ATigreal()
@@ -89,7 +90,7 @@ void ATigreal::InitializeSlashOverlay()
 void ATigreal::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
-	UE_LOG(LogTemp, Warning, TEXT("Tigreal Got Hit!!"));
+	//UE_LOG(LogTemp, Warning, TEXT("Tigreal Got Hit!!"));
 	ActionState = EActionState::EAS_HitReaction;
 }
 
@@ -164,10 +165,6 @@ void ATigreal::Zoom(const FInputActionValue& Value)
 void ATigreal::FPressed(const FInputActionValue& Value)
 {
 	auto OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Cyan, FString("FPressed"));
-	}
 	if (OverlappingWeapon)
 	{
 		OverlappingWeapon->Equip(GetMesh(), FName("hand_rSocket"), this, this);
@@ -196,7 +193,7 @@ void ATigreal::Attack()
 {
 	if (CanAttack())
 	{
-		PlayAttackMontage(2);
+		PlayAttackMontage(3);
 		ActionState = EActionState::EAS_Attacking;
 		LandState = ELandState::ELC_Unlocked;
 	}
@@ -206,15 +203,17 @@ void ATigreal::Die(EDeathPose PossibleDeathPose, const FName& SectionName)
 {
 	DeathPose = PossibleDeathPose;
 	PlayDeathReactMontage(SectionName);
+	GetWorldTimerManager().SetTimer(LevelOpenTimerHandle, this, &ATigreal::OpenLevelDelayed, 5.0f);
+}
+
+void ATigreal::OpenLevelDelayed()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), FName("MainMenu"), true);
 }
 
 
 void ATigreal::PlayArmMontage(FName SectionName)
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Cyan, FString("Playing Arm Montage"));
-	}
 	auto const  AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ArmMontage)
 	{
